@@ -10,10 +10,10 @@ In the multiple bank system, systemic risk is the main concern for financial sta
 To construct simplified model of the banking system we will employ the network theory where each node corresponds to a bank and each linkage between the nodes represents a directional lending relationship. Our model initiates a financial shock at one bank and transmits overflow that cannot be paid via links to the lending banks, potentially causing them to fail and spreading the shock recursively through the network. This model is called "knock-on defaults". Parameters of the model are: capitalization level, degree of connectivity, size of interbank susceptibility, and degree of the concentration. We will vary these four parameters and relate them with the number of defects, describing resilience of banking systems.
 
 ## Fundamental Questions
-•	How much effect of changing one parameter dependent on values of other ones (fixed)?
-•	How expected count of defaults can be expressed can be expressed or at least described as a function of model parameters?
-•	How repeatable are the results for fixed parameters? (variation between realizations?)
-•	Which model parameters can be influenced by regulators and what should they aim for?
+*	How much effect of changing one parameter dependent on values of other ones (fixed)?
+*	How expected count of defaults can be expressed can be expressed or at least described as a function of model parameters?
+*	How repeatable are the results for fixed parameters? (variation between realizations?)
+*	Which model parameters can be influenced by regulators and what should they aim for?
 
 
 ## References 
