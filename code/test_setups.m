@@ -10,7 +10,7 @@ S=200;      % Shock size
 s=1;        % Initialy shocked bank
 
    % Perhabs any loop around it
-[B, a, e, i, c, d, b] = generate_banks(N, p, gamma, theta, E);
+[B, a, e, i, c, d, b,w] = generate_banks(N, p, gamma, theta, E);
   % B = N*N Array Bij = 1 -> connection from Bank i to j / 0 -> no connection 
   % a = 1*N List of total assets per bank
   % e = 1*N List of external assets per bank
@@ -19,7 +19,7 @@ s=1;        % Initialy shocked bank
   % d = 1*N List of customer deposits per bank
   % b = 1*N List of interbank borrowing per bank
   
-F = simulate(B, a, e, i, c, d, b, S, s);
+F = simulate(B, a, e, i, c, d, b, w, S, s)
   % F = number of failed banks
   
   

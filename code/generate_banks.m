@@ -1,4 +1,4 @@
-function [B, a, e, i, c, d, b] = generate_banks(N, p, gamma, theta, E)
+function [B, a, e, i, c, d, b, w] = generate_banks(N, p, gamma, theta, E)
 % Function to generate values of the banking system
 
 B = random_graph(N,p); % B = the unidirectional banking system Graph
