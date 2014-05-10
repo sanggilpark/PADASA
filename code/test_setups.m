@@ -3,7 +3,7 @@
 clear all;
 N=25;       % Number of Banks
 p=0.25;     % probability of any two Banks being connected (unidirectional)
-gamma=0.5;  % net worth as a percentage of total assets
+gamma=0.1;  % net worth as a percentage of total assets
 theta=0.5;  % percentage of interbank assets in total assets
 E=1000;     % total external assets of banking system (do we need that?)
 S=200;      % Shock size
@@ -18,7 +18,7 @@ s=1;        % Initialy shocked bank
   % c = 1*N List of net worth per bank
   % d = 1*N List of customer deposits per bank
   % b = 1*N List of interbank borrowing per bank
-  F = simulate(B, a, e, i, c, d, b, w, S, s)
+  F = simulate(B, a, e, i, c, d, b, w, S, s);
   % F = number of failed banks
   
   
