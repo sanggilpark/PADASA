@@ -10,7 +10,7 @@ S=200;      % Shock size
 s=1;        % Initialy shocked bank
 
    % Perhabs any loop around it
-[B, a, e, i, c, d, b,w] = generate_banks(N, p, gamma, theta, E);
+[B, a, e, i, c, d, b, w] = generate_banks(N, p, gamma, theta, E);
   % B = N*N Array Bij = 1 -> connection from Bank i to j / 0 -> no connection 
   % a = 1*N List of total assets per bank
   % e = 1*N List of external assets per bank
