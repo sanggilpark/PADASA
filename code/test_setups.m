@@ -37,23 +37,33 @@ Gamma=0:0.001:0.1;
 nGamma=length(Gamma);
 Runs=50;
 nFaults=zeros(Runs,nGamma);
+safeDeposit=zeros(Runs,nGamma);
 h=waitbar(0,'0%');
 for gamma=1:nGamma
     for r=1:Runs
         [B,a,e,i,c,d,b,w]=generate_banks(N,p,Gamma(gamma),theta,E);
         faults=zeros(1,N);
+        deposit=zeros(1,N);
         parfor s=1:N
-            faults(s)=simulate(B,a,e,i,c,d,b,w,S,s);
+            [faults(s), de]=simulate(B,a,e,i,c,d,b,w,S,s);
+            deposit(s)=sum(de)/sum(d);
         end
         nFaults(r,gamma)=sum(faults)/N;
+        safeDeposit(r,gamma)=sum(deposit)/N;
         waitbar(((gamma-1)*Runs+r)/nGamma/Runs,h,sprintf('%g%%',round(((gamma-1)*Runs+r)/nGamma/Runs*1000)/10));
     end
 end
 X=[Gamma,fliplr(Gamma)];
-Y=[max(nFaults),fliplr(min(nFaults))];
-fill(X,Y,[0.5 0.5 1]);
+Y1=[max(nFaults),fliplr(min(nFaults))];
+fill(X,Y1,[0.5 0.5 1]);
 hold on;
 plot(Gamma,sum(nFaults)/Runs);
+hold off;
+figure;
+Y2=[max(safeDeposit),fliplr(min(safeDeposit))];
+fill(X,Y2,[0.5 0.5 1]);
+hold on;
+plot(Gamma,sum(safeDeposit)/Runs);
 hold off;
 close(h);
 matlabpool close;
@@ -65,28 +75,53 @@ E=100000;
 S=100000;
 N=25;
 p=0.2;
-Theta=0:0.005:0.5;
-gamma=0.05;
+Theta=0:0.01:0.5;
+Gamma=[0.01 0.03 0.05 0.07];
 nTheta=length(Theta);
+nGamma=length(Gamma);
 Runs=50;
-nFaults=zeros(Runs,nTheta);
+nFaults=zeros(Runs,nTheta*nGamma);
+safeDeposit=zeros(Runs,nTheta*nGamma);
 h=waitbar(0,'0%');
-for theta=1:nTheta
-    for r=1:Runs
-        [B,a,e,i,c,d,b,w]=generate_banks(N,p,gamma,Theta(theta),E);
-        faults=zeros(1,N);
-        parfor s=1:N
-            faults(s)=simulate(B,a,e,i,c,d,b,w,S,s);
+for gamma=1:nGamma
+    for theta=1:nTheta
+        for r=1:Runs
+            [B,a,e,i,c,d,b,w]=generate_banks(N,p,Gamma(gamma),Theta(theta),E);
+            faults=zeros(1,N);
+            deposit=zeros(1,N);
+            parfor s=1:N
+                [faults(s), de]=simulate(B,a,e,i,c,d,b,w,S,s);
+                deposit(s)=sum(de)/sum(d);
+            end
+            nFaults(r,(gamma-1)*nTheta+theta)=sum(faults)/N;
+            safeDeposit(r,(gamma-1)*nTheta+theta)=sum(deposit)/N;
+            waitbar(((gamma-1)*nTheta*Runs+(theta-1)*Runs+r)/nGamma/nTheta/Runs,h,sprintf('%g%%',round(((gamma-1)*nTheta*Runs+(theta-1)*Runs+r)/nGamma/nTheta/Runs*1000)/10));
         end
-        nFaults(r,theta)=sum(faults)/N;
-        waitbar(((theta-1)*Runs+r)/nTheta/Runs,h,sprintf('%g%%',round(((theta-1)*Runs+r)/nTheta/Runs*1000)/10));
     end
 end
 X=[Theta,fliplr(Theta)];
-Y=[max(nFaults),fliplr(min(nFaults))];
-fill(X,Y,[0.5 0.5 1]);
+Y1=[max(nFaults(:,1:nTheta)),fliplr(min(nFaults(:,1:nTheta)))];
+Y2=[max(nFaults(:,nTheta+(1:nTheta))),fliplr(min(nFaults(:,nTheta+(1:nTheta))))];
+Y3=[max(nFaults(:,2*nTheta+(1:nTheta))),fliplr(min(nFaults(:,2*nTheta+(1:nTheta))))];
+Y4=[max(nFaults(:,3*nTheta+(1:nTheta))),fliplr(min(nFaults(:,3*nTheta+(1:nTheta))))];
+fill(X,Y1,[0.5 0.5 1]);
 hold on;
-plot(Theta,sum(nFaults)/Runs);
+fill(X,Y2,[0.5 1 0.5]);
+fill(X,Y3,[1 0.5 0.5]);
+fill(X,Y4,[1 1 0.5]);
+plot(Theta,sum(nFaults(:,1:nTheta))/Runs,Theta,sum(nFaults(:,nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,2*nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,3*nTheta+(1:nTheta)))/Runs);
+hold off;
+figure;
+Y5=[max(safeDeposit(:,1:nTheta)),fliplr(min(safeDeposit(:,1:nTheta)))];
+Y6=[max(safeDeposit(:,nTheta+(1:nTheta))),fliplr(min(safeDeposit(:,nTheta+(1:nTheta))))];
+Y7=[max(safeDeposit(:,2*nTheta+(1:nTheta))),fliplr(min(safeDeposit(:,2*nTheta+(1:nTheta))))];
+Y8=[max(safeDeposit(:,3*nTheta+(1:nTheta))),fliplr(min(safeDeposit(:,3*nTheta+(1:nTheta))))];
+fill(X,Y5,[0.5 0.5 1]);
+hold on;
+fill(X,Y6,[0.5 1 0.5]);
+fill(X,Y7,[1 0.5 0.5]);
+fill(X,Y8,[1 1 0.5]);
+plot(Theta,sum(safeDeposit(:,1:nTheta))/Runs,Theta,sum(safeDeposit(:,nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,2*nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,3*nTheta+(1:nTheta)))/Runs);
 hold off;
 close(h);
 matlabpool close;
@@ -104,16 +139,20 @@ nP=length(P);
 nGamma=length(Gamma);
 Runs=50;
 nFaults=zeros(Runs,nP*nGamma);
+safeDeposit=zeros(Runs,nP*nGamma);
 h=waitbar(0,'0%');
 for gamma=1:nGamma
     for p=1:nP
         for r=1:Runs
             [B,a,e,i,c,d,b,w]=generate_banks(N,P(p),Gamma(gamma),theta,E);
             faults=zeros(1,N);
+            deposit=zeros(1,N);
             parfor s=1:N
-                faults(s)=simulate(B,a,e,i,c,d,b,w,S,s);
+                [faults(s), de]=simulate(B,a,e,i,c,d,b,w,S,s);
+                deposit(s)=sum(de)/sum(d);
             end
             nFaults(r,(gamma-1)*nP+p)=sum(faults)/N;
+            safeDeposit(r,(gamma-1)*nP+p)=sum(deposit)/N;
             waitbar(((gamma-1)*nP*Runs+(p-1)*Runs+r)/nGamma/nP/Runs,h,sprintf('%g%%',round(((gamma-1)*nP*Runs+(p-1)*Runs+r)/nGamma/nP/Runs*1000)/10));
         end
     end
@@ -127,6 +166,16 @@ hold on;
 fill(X,Y2,[0.5 1 0.5]);
 fill(X,Y3,[1 0.5 0.5]);
 plot(P,sum(nFaults(:,1:nP))/Runs,P,sum(nFaults(:,nP+(1:nP)))/Runs,P,sum(nFaults(:,2*nP+(1:nP)))/Runs);
+hold off;
+figure;
+Y4=[max(safeDeposit(:,1:nP)),fliplr(min(safeDeposit(:,1:nP)))];
+Y5=[max(safeDeposit(:,nP+(1:nP))),fliplr(min(safeDeposit(:,nP+(1:nP))))];
+Y6=[max(safeDeposit(:,2*nP+(1:nP))),fliplr(min(safeDeposit(:,2*nP+(1:nP))))];
+fill(X,Y4,[0.5 0.5 1]);
+hold on;
+fill(X,Y5,[0.5 1 0.5]);
+fill(X,Y6,[1 0.5 0.5]);
+plot(P,sum(safeDeposit(:,1:nP))/Runs,P,sum(safeDeposit(:,nP+(1:nP)))/Runs,P,sum(safeDeposit(:,2*nP+(1:nP)))/Runs);
 hold off;
 close(h);
 matlabpool close;
@@ -143,28 +192,33 @@ gamma=0.02;
 Runs=10000;
 Step=100;
 Faults=zeros(1,Runs*N);
+safeDeposit=zeros(1,Runs*N);
 Size=Faults;
 Outgoing=Faults;
-Incoming=Faults;
 h=waitbar(0,'0%');
 for r=1:Runs
     [B,a,e,i,c,d,b,w]=generate_banks(N,p,gamma,theta,E);
     faults=zeros(1,N);
+    deposit=zeros(1,N);
     parfor s=1:N
-        faults(s)=simulate(B,a,e,i,c,d,b,w,S,s);
+        [faults(s), de]=simulate(B,a,e,i,c,d,b,w,S,s);
+        deposit(s)=sum(de)/sum(d);
     end
     a=round(a/Step)*Step;
     Faults(((r-1)*N+1):r*N)=faults;
     Size(((r-1)*N+1):r*N)=a;
     Outgoing(((r-1)*N+1):r*N)=round(i/w);
-    Incoming(((r-1)*N+1):r*N)=round(b/w);
+    safeDeposit(((r-1)*N+1):r*N)=deposit;
     waitbar(r/Runs,h,sprintf('%g%%',round(r/Runs*1000)/10));
 end
-
 boxplot(Faults,Size);
 figure;
 boxplot(Faults,Outgoing);
 figure;
-boxplot(Faults,Incoming);
+boxplot(safeDeposit,Size);
+figure;
+boxplot(safeDeposit,Outgoing);
+figure;
+plot(Faults,safeDeposit,'.');
 close(h);
 matlabpool close;

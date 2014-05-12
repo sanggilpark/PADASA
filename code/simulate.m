@@ -1,4 +1,4 @@
-function F = simulate(B, a, e, i, c, d, b, w, S, s)
+function [F,d] = simulate(B, a, e, i, c, d, b, w, S, s)
     % Simulation routine
     % B = N*N Array Bij = 1 -> connection from Bank i to j / 0 -> no connection 
     % a = 1*N List of total assets per bank
