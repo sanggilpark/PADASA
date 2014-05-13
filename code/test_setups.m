@@ -16,10 +16,11 @@ s=1;        % Initialy shocked bank
   % e = 1*N List of external assets per bank
   % i = 1*N List of interbank assets per bank
   % c = 1*N List of net worth per bank
-  % d = 1*N List of customer deposits per bank
+  % d = 1*N List of consumer deposits per bank
   % b = 1*N List of interbank borrowing per bank
-  F = simulate(B, a, e, i, c, d, b, w, S, s);
+  [F, d] = simulate(B, a, e, i, c, d, b, w, S, s);
   % F = number of failed banks
+  % d = 1*N List of consumer deposits per bank at the end
   
   
    %Summary/Calculations/Graph generation...
@@ -35,9 +36,9 @@ p=0.2;
 theta=0.2;
 Gamma=0:0.001:0.1;
 nGamma=length(Gamma);
-Runs=50;
+Runs=100;
 nFaults=zeros(Runs,nGamma);
-safeDeposit=zeros(Runs,nGamma);
+lostDeposit=zeros(Runs,nGamma);
 h=waitbar(0,'0%');
 for gamma=1:nGamma
     for r=1:Runs
@@ -49,22 +50,35 @@ for gamma=1:nGamma
             deposit(s)=sum(de)/sum(d);
         end
         nFaults(r,gamma)=sum(faults)/N;
-        safeDeposit(r,gamma)=sum(deposit)/N;
+        lostDeposit(r,gamma)=1-sum(deposit)/N;
         waitbar(((gamma-1)*Runs+r)/nGamma/Runs,h,sprintf('%g%%',round(((gamma-1)*Runs+r)/nGamma/Runs*1000)/10));
     end
 end
 X=[Gamma,fliplr(Gamma)];
 Y1=[max(nFaults),fliplr(min(nFaults))];
+Y2=[max(lostDeposit),fliplr(min(lostDeposit))];
+
 fill(X,Y1,[0.5 0.5 1]);
 hold on;
-plot(Gamma,sum(nFaults)/Runs);
+plot(Gamma,sum(nFaults)/Runs,'LineWidth',2);
+set(gca,'FontSize',14);
+xlabel('Percentage net worth');
+ylabel('Number of defaults');
+xlim([0 0.1]);
+ylim([0 25]);
 hold off;
+
 figure;
-Y2=[max(safeDeposit),fliplr(min(safeDeposit))];
 fill(X,Y2,[0.5 0.5 1]);
 hold on;
-plot(Gamma,sum(safeDeposit)/Runs);
+plot(Gamma,sum(lostDeposit)/Runs,'LineWidth',2);
+set(gca,'FontSize',14);
+xlabel('Percentage net worth');
+ylabel('Percentage lost consumer deposits');
+xlim([0 0.1]);
+ylim([0.03 0.1]);
 hold off;
+
 close(h);
 matlabpool close;
 
@@ -76,12 +90,12 @@ S=100000;
 N=25;
 p=0.2;
 Theta=0:0.01:0.5;
-Gamma=[0.01 0.03 0.05 0.07];
+Gamma=[0.01 0.03 0.05];
 nTheta=length(Theta);
 nGamma=length(Gamma);
-Runs=50;
+Runs=100;
 nFaults=zeros(Runs,nTheta*nGamma);
-safeDeposit=zeros(Runs,nTheta*nGamma);
+lostDeposit=zeros(Runs,nTheta*nGamma);
 h=waitbar(0,'0%');
 for gamma=1:nGamma
     for theta=1:nTheta
@@ -91,10 +105,10 @@ for gamma=1:nGamma
             deposit=zeros(1,N);
             parfor s=1:N
                 [faults(s), de]=simulate(B,a,e,i,c,d,b,w,S,s);
-                deposit(s)=sum(de)/sum(d);
+                deposit(s)=1-sum(de)/sum(d);
             end
             nFaults(r,(gamma-1)*nTheta+theta)=sum(faults)/N;
-            safeDeposit(r,(gamma-1)*nTheta+theta)=sum(deposit)/N;
+            lostDeposit(r,(gamma-1)*nTheta+theta)=sum(deposit)/N;
             waitbar(((gamma-1)*nTheta*Runs+(theta-1)*Runs+r)/nGamma/nTheta/Runs,h,sprintf('%g%%',round(((gamma-1)*nTheta*Runs+(theta-1)*Runs+r)/nGamma/nTheta/Runs*1000)/10));
         end
     end
@@ -103,26 +117,37 @@ X=[Theta,fliplr(Theta)];
 Y1=[max(nFaults(:,1:nTheta)),fliplr(min(nFaults(:,1:nTheta)))];
 Y2=[max(nFaults(:,nTheta+(1:nTheta))),fliplr(min(nFaults(:,nTheta+(1:nTheta))))];
 Y3=[max(nFaults(:,2*nTheta+(1:nTheta))),fliplr(min(nFaults(:,2*nTheta+(1:nTheta))))];
-Y4=[max(nFaults(:,3*nTheta+(1:nTheta))),fliplr(min(nFaults(:,3*nTheta+(1:nTheta))))];
+Y4=[max(lostDeposit(:,1:nTheta)),fliplr(min(lostDeposit(:,1:nTheta)))];
+Y5=[max(lostDeposit(:,nTheta+(1:nTheta))),fliplr(min(lostDeposit(:,nTheta+(1:nTheta))))];
+Y6=[max(lostDeposit(:,2*nTheta+(1:nTheta))),fliplr(min(lostDeposit(:,2*nTheta+(1:nTheta))))];
+
 fill(X,Y1,[0.5 0.5 1]);
 hold on;
 fill(X,Y2,[0.5 1 0.5]);
 fill(X,Y3,[1 0.5 0.5]);
-fill(X,Y4,[1 1 0.5]);
-plot(Theta,sum(nFaults(:,1:nTheta))/Runs,Theta,sum(nFaults(:,nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,2*nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,3*nTheta+(1:nTheta)))/Runs);
+pl=plot(Theta,sum(nFaults(:,1:nTheta))/Runs,Theta,sum(nFaults(:,nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,2*nTheta+(1:nTheta)))/Runs,'LineWidth',2);
+set(gca,'FontSize',14);
+xlabel('Percentage interbank assets');
+ylabel('Number of defaults');
+legend(pl,'Net Worth 1%','Net Worth 3%','Net Worth 5%','Location','NorthWest');
+xlim([0 0.5]);
+ylim([0 25]);
 hold off;
+
 figure;
-Y5=[max(safeDeposit(:,1:nTheta)),fliplr(min(safeDeposit(:,1:nTheta)))];
-Y6=[max(safeDeposit(:,nTheta+(1:nTheta))),fliplr(min(safeDeposit(:,nTheta+(1:nTheta))))];
-Y7=[max(safeDeposit(:,2*nTheta+(1:nTheta))),fliplr(min(safeDeposit(:,2*nTheta+(1:nTheta))))];
-Y8=[max(safeDeposit(:,3*nTheta+(1:nTheta))),fliplr(min(safeDeposit(:,3*nTheta+(1:nTheta))))];
-fill(X,Y5,[0.5 0.5 1]);
+fill(X,Y4,[0.5 0.5 1]);
 hold on;
-fill(X,Y6,[0.5 1 0.5]);
-fill(X,Y7,[1 0.5 0.5]);
-fill(X,Y8,[1 1 0.5]);
-plot(Theta,sum(safeDeposit(:,1:nTheta))/Runs,Theta,sum(safeDeposit(:,nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,2*nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,3*nTheta+(1:nTheta)))/Runs);
+fill(X,Y5,[0.5 1 0.5]);
+fill(X,Y6,[1 0.5 0.5]);
+pl=plot(Theta,sum(lostDeposit(:,1:nTheta))/Runs,Theta,sum(lostDeposit(:,nTheta+(1:nTheta)))/Runs,Theta,sum(nFaults(:,2*nTheta+(1:nTheta)))/Runs,'LineWidth',2);
+set(gca,'FontSize',14);
+xlabel('Percentage interbank assets');
+ylabel('Percentage lost consumer deposits');
+legend(pl,'Net Worth 1%','Net Worth 3%','Net Worth 5%','Location','NorthWest');
+xlim([0 0.5]);
+ylim([0.03 0.2]);
 hold off;
+
 close(h);
 matlabpool close;
 
@@ -137,9 +162,9 @@ theta=0.2;
 Gamma=[0.01 0.03 0.07];
 nP=length(P);
 nGamma=length(Gamma);
-Runs=50;
+Runs=100;
 nFaults=zeros(Runs,nP*nGamma);
-safeDeposit=zeros(Runs,nP*nGamma);
+lostDeposit=zeros(Runs,nP*nGamma);
 h=waitbar(0,'0%');
 for gamma=1:nGamma
     for p=1:nP
@@ -149,10 +174,10 @@ for gamma=1:nGamma
             deposit=zeros(1,N);
             parfor s=1:N
                 [faults(s), de]=simulate(B,a,e,i,c,d,b,w,S,s);
-                deposit(s)=sum(de)/sum(d);
+                deposit(s)=1-sum(de)/sum(d);
             end
             nFaults(r,(gamma-1)*nP+p)=sum(faults)/N;
-            safeDeposit(r,(gamma-1)*nP+p)=sum(deposit)/N;
+            lostDeposit(r,(gamma-1)*nP+p)=sum(deposit)/N;
             waitbar(((gamma-1)*nP*Runs+(p-1)*Runs+r)/nGamma/nP/Runs,h,sprintf('%g%%',round(((gamma-1)*nP*Runs+(p-1)*Runs+r)/nGamma/nP/Runs*1000)/10));
         end
     end
@@ -161,22 +186,37 @@ X=[P,fliplr(P)];
 Y1=[max(nFaults(:,1:nP)),fliplr(min(nFaults(:,1:nP)))];
 Y2=[max(nFaults(:,nP+(1:nP))),fliplr(min(nFaults(:,nP+(1:nP))))];
 Y3=[max(nFaults(:,2*nP+(1:nP))),fliplr(min(nFaults(:,2*nP+(1:nP))))];
+Y4=[max(lostDeposit(:,1:nP)),fliplr(min(lostDeposit(:,1:nP)))];
+Y5=[max(lostDeposit(:,nP+(1:nP))),fliplr(min(lostDeposit(:,nP+(1:nP))))];
+Y6=[max(lostDeposit(:,2*nP+(1:nP))),fliplr(min(lostDeposit(:,2*nP+(1:nP))))];
+
 fill(X,Y1,[0.5 0.5 1]);
 hold on;
 fill(X,Y2,[0.5 1 0.5]);
 fill(X,Y3,[1 0.5 0.5]);
-plot(P,sum(nFaults(:,1:nP))/Runs,P,sum(nFaults(:,nP+(1:nP)))/Runs,P,sum(nFaults(:,2*nP+(1:nP)))/Runs);
+pl=plot(P,sum(nFaults(:,1:nP))/Runs,P,sum(nFaults(:,nP+(1:nP)))/Runs,P,sum(nFaults(:,2*nP+(1:nP)))/Runs,'LineWidth',2);
+set(gca,'FontSize',14);
+xlabel('Erdös-Rényi probability');
+ylabel('Number of defaults');
+legend(pl,'Net Worth 1%','Net Worth 3%','Net Worth 7%','Location','NorthWest');
+xlim([0 1]);
+ylim([0 25]);
 hold off;
+
 figure;
-Y4=[max(safeDeposit(:,1:nP)),fliplr(min(safeDeposit(:,1:nP)))];
-Y5=[max(safeDeposit(:,nP+(1:nP))),fliplr(min(safeDeposit(:,nP+(1:nP))))];
-Y6=[max(safeDeposit(:,2*nP+(1:nP))),fliplr(min(safeDeposit(:,2*nP+(1:nP))))];
 fill(X,Y4,[0.5 0.5 1]);
 hold on;
 fill(X,Y5,[0.5 1 0.5]);
 fill(X,Y6,[1 0.5 0.5]);
-plot(P,sum(safeDeposit(:,1:nP))/Runs,P,sum(safeDeposit(:,nP+(1:nP)))/Runs,P,sum(safeDeposit(:,2*nP+(1:nP)))/Runs);
+pl=plot(P,sum(lostDeposit(:,1:nP))/Runs,P,sum(lostDeposit(:,nP+(1:nP)))/Runs,P,sum(lostDeposit(:,2*nP+(1:nP)))/Runs,'LineWidth',2);
+set(gca,'FontSize',14);
+xlabel('Erdös-Rényi probability');
+ylabel('Percentage lost consumer deposits');
+legend(pl,'Net Worth 1%','Net Worth 3%','Net Worth 7%','Location','NorthWest');
+xlim([0 1]);
+ylim([0.03 0.1]);
 hold off;
+
 close(h);
 matlabpool close;
 
@@ -190,9 +230,9 @@ p=0.2;
 theta=0.2;
 gamma=0.02;
 Runs=10000;
-Step=100;
+Step=200;
 Faults=zeros(1,Runs*N);
-safeDeposit=zeros(1,Runs*N);
+lostDeposit=zeros(1,Runs*N);
 Size=Faults;
 Outgoing=Faults;
 h=waitbar(0,'0%');
@@ -202,23 +242,50 @@ for r=1:Runs
     deposit=zeros(1,N);
     parfor s=1:N
         [faults(s), de]=simulate(B,a,e,i,c,d,b,w,S,s);
-        deposit(s)=sum(de)/sum(d);
+        deposit(s)=1-sum(de)/sum(d);
     end
     a=round(a/Step)*Step;
     Faults(((r-1)*N+1):r*N)=faults;
     Size(((r-1)*N+1):r*N)=a;
     Outgoing(((r-1)*N+1):r*N)=round(i/w);
-    safeDeposit(((r-1)*N+1):r*N)=deposit;
+    lostDeposit(((r-1)*N+1):r*N)=deposit;
     waitbar(r/Runs,h,sprintf('%g%%',round(r/Runs*1000)/10));
 end
-boxplot(Faults,Size);
+
+
+boxplot(Faults,Size,'symbol','','labelorientation','inline');
+set(gca,'FontSize',14);
+xlabel('Total assets of the first bank (grouped)');
+ylabel('Number of defaults');
+ylim([0 25]);
+
 figure;
-boxplot(Faults,Outgoing);
+boxplot(Faults,Outgoing,'symbol','');
+set(gca,'FontSize',14);
+xlabel('Outgoing links of the first bank');
+ylabel('Number of defaults');
+ylim([0 25]);
+
 figure;
-boxplot(safeDeposit,Size);
+boxplot(lostDeposit,Size,'symbol','','labelorientation','inline');
+set(gca,'FontSize',14);
+xlabel('Total assets of the first bank (grouped)');
+ylabel('Percentage lost consumer deposits');
+ylim([0 0.1]);
+
 figure;
-boxplot(safeDeposit,Outgoing);
+boxplot(lostDeposit,Outgoing,'symbol','');
+set(gca,'FontSize',14);
+xlabel('Outgoing links of the first bank');
+ylabel('Percentage lost consumer deposits');
+ylim([0 0.1]);
+
 figure;
-plot(Faults,safeDeposit,'.');
+boxplot(lostDeposit,Faults,'symbol','');
+set(gca,'FontSize',14);
+xlabel('Number of defaults');
+ylabel('Percentage lost consumer deposits');
+ylim([0 0.1]);
+
 close(h);
 matlabpool close;

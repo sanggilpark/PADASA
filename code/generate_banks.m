@@ -10,6 +10,9 @@ I = theta * A;  % = aggregate size of interbank exposures
 
 Z = sum(sum(B));% = number of links
 w = I / Z;      % = weight of any link, to define the interbank assets of a bank
+if Z==0
+    w=0;        % Set w and therefor also b and i to 0 if there is no link
+end
 
 i = sum(B,2)'* w; % = interbank assets per bank as number of outgoing links times the weight
 b = sum(B,1) * w; % = interbank borrowing per bank as number of incoming links times the weight
